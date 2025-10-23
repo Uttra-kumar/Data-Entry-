@@ -1,0 +1,1111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Entry Software</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        :root {
+            --primary: #4361ee;
+            --secondary: #3f37c9;
+            --success: #4cc9f0;
+            --danger: #f72585;
+            --warning: #f8961e;
+            --info: #4895ef;
+            --light: #f8f9fa;
+            --dark: #212529;
+            --background: #f5f7ff;
+            --card-bg: #ffffff;
+            --text: #333333;
+            --text-light: #6c757d;
+            --shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            --radius: 12px;
+            --transition: all 0.3s ease;
+        }
+
+        .dark-mode {
+            --primary: #5a67d8;
+            --secondary: #4c51bf;
+            --success: #63b3ed;
+            --danger: #ed64a6;
+            --warning: #f6ad55;
+            --info: #7f9cf5;
+            --light: #2d3748;
+            --dark: #f7fafc;
+            --background: #1a202c;
+            --card-bg: #2d3748;
+            --text: #f7fafc;
+            --text-light: #cbd5e0;
+            --shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--background);
+            color: var(--text);
+            transition: var(--transition);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 0;
+            margin-bottom: 30px;
+            border-bottom: 1px solid rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            color: var(--primary);
+            font-size: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .header h1 i {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        .user-menu {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .theme-toggle {
+            background: none;
+            border: none;
+            color: var(--text);
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: var(--transition);
+        }
+
+        .theme-toggle:hover {
+            transform: rotate(30deg);
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 25px;
+            margin-bottom: 30px;
+            transition: var(--transition);
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .card-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--primary);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--text);
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: var(--radius);
+            background: var(--card-bg);
+            color: var(--text);
+            transition: var(--transition);
+            font-size: 1rem;
+        }
+
+        .form-control:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.2);
+            outline: none;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        @media (max-width: 768px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: var(--radius);
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: var(--transition);
+            text-align: center;
+        }
+
+        .btn:hover {
+            background: var(--secondary);
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: var(--secondary);
+        }
+
+        .btn-success {
+            background: var(--success);
+        }
+
+        .btn-danger {
+            background: var(--danger);
+        }
+
+        .btn-warning {
+            background: var(--warning);
+        }
+
+        .btn-info {
+            background: var(--info);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .action-buttons .btn {
+            flex: 1;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--card-bg);
+        }
+
+        thead {
+            background: var(--primary);
+            color: white;
+        }
+
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+        }
+
+        tbody tr {
+            transition: var(--transition);
+        }
+
+        tbody tr:hover {
+            background: rgba(0,0,0,0.02);
+        }
+
+        .actions-cell {
+            display: flex;
+            gap: 10px;
+        }
+
+        .action-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: var(--transition);
+            padding: 5px 10px;
+            border-radius: 5px;
+        }
+
+        .edit-btn {
+            color: var(--info);
+        }
+
+        .edit-btn:hover {
+            background: rgba(72, 149, 239, 0.1);
+        }
+
+        .delete-btn {
+            color: var(--danger);
+        }
+
+        .delete-btn:hover {
+            background: rgba(247, 37, 133, 0.1);
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            background: var(--success);
+            color: white;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            transform: translateX(150%);
+            transition: transform 0.3s ease;
+            z-index: 1001;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .notification.error {
+            background: var(--danger);
+        }
+
+        .notification.warning {
+            background: var(--warning);
+        }
+
+        .export-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .export-buttons .btn {
+            flex: 1;
+            min-width: 150px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 30px;
+            width: 90%;
+            max-width: 500px;
+            transform: scale(0.9);
+            opacity: 0;
+            animation: modalAppear 0.3s forwards;
+        }
+
+        @keyframes modalAppear {
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text-light);
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-light);
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            color: var(--primary);
+        }
+
+        .debug-info {
+            background: #f8f9fa;
+            border-left: 4px solid var(--info);
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+
+        .debug-info h4 {
+            margin-top: 0;
+            color: var(--info);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-database"></i> Data Entry Software</h1>
+            <div class="user-menu">
+                <button class="theme-toggle" id="themeToggle">
+                    <i class="fas fa-moon"></i>
+                </button>
+            </div>
+        </div>
+
+        <div class="debug-info">
+            <h4><i class="fas fa-bug"></i> Connection Status</h4>
+            <p id="connectionStatus">Checking Supabase connection...</p>
+            <p id="tableStatus">Checking table structure...</p>
+        </div>
+
+        <div class="card">
+            <h2 class="card-title"><i class="fas fa-plus-circle"></i> Add New Entry</h2>
+            <form id="dataForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="name">Full Name</label>
+                        <input type="text" id="name" class="form-control" placeholder="Enter full name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="mobile">Mobile Number</label>
+                        <input type="tel" id="mobile" class="form-control" placeholder="Enter mobile number" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="idField">ID (Auto-generated)</label>
+                        <input type="text" id="idField" class="form-control" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label for="createdAt">Created At</label>
+                        <input type="text" id="createdAt" class="form-control" readonly>
+                    </div>
+                </div>
+                <div class="action-buttons">
+                    <button type="submit" class="btn btn-success" id="submitBtn">
+                        <i class="fas fa-save"></i> Save Entry
+                    </button>
+                    <button type="button" class="btn btn-secondary" id="resetBtn">
+                        <i class="fas fa-redo"></i> Reset Form
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <div class="card">
+            <h2 class="card-title"><i class="fas fa-table"></i> Data Records</h2>
+            <div class="table-container">
+                <table id="dataTable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Mobile</th>
+                            <th>Created At</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        <!-- Data will be populated here -->
+                    </tbody>
+                </table>
+            </div>
+            <div id="emptyState" class="empty-state" style="display: none;">
+                <i class="fas fa-inbox"></i>
+                <h3>No Data Available</h3>
+                <p>Add your first entry using the form above.</p>
+            </div>
+            <div class="export-buttons">
+                <button class="btn btn-info" id="exportExcel">
+                    <i class="fas fa-file-excel"></i> Export to Excel
+                </button>
+                <button class="btn btn-warning" id="exportText">
+                    <i class="fas fa-file-alt"></i> Export to Text
+                </button>
+                <button class="btn btn-danger" id="exportPDF">
+                    <i class="fas fa-file-pdf"></i> Export to PDF
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Modal -->
+    <div class="modal" id="editModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Edit Entry</h2>
+                <button class="close-modal">&times;</button>
+            </div>
+            <form id="editForm">
+                <input type="hidden" id="editId">
+                <div class="form-group">
+                    <label for="editName">Full Name</label>
+                    <input type="text" id="editName" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label for="editMobile">Mobile Number</label>
+                    <input type="tel" id="editMobile" class="form-control" required>
+                </div>
+                <div class="action-buttons">
+                    <button type="submit" class="btn btn-success" id="updateBtn">
+                        <i class="fas fa-save"></i> Update Entry
+                    </button>
+                    <button type="button" class="btn btn-secondary" id="cancelEdit">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Notification -->
+    <div class="notification" id="notification">
+        <i class="fas fa-check-circle"></i>
+        <span id="notificationText">Operation completed successfully!</span>
+    </div>
+
+    <script>
+        // Supabase configuration
+        const SUPABASE_URL = 'https://iydamvrlxtwsnqvflaxq.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml5ZGFtdnJseHR3c25xdmZsYXhxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgwOTczMTIsImV4cCI6MjA3MzY3MzMxMn0.Z8m6XGyu9wsN_UJ8EZYr12BRemsO12_U8EEZ9JizQ6w';
+        
+        // Initialize Supabase client
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // DOM Elements
+        const themeToggle = document.getElementById('themeToggle');
+        const dataForm = document.getElementById('dataForm');
+        const idField = document.getElementById('idField');
+        const createdAt = document.getElementById('createdAt');
+        const submitBtn = document.getElementById('submitBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const tableBody = document.getElementById('tableBody');
+        const emptyState = document.getElementById('emptyState');
+        const editModal = document.getElementById('editModal');
+        const closeModal = document.querySelector('.close-modal');
+        const editForm = document.getElementById('editForm');
+        const cancelEdit = document.getElementById('cancelEdit');
+        const updateBtn = document.getElementById('updateBtn');
+        const notification = document.getElementById('notification');
+        const notificationText = document.getElementById('notificationText');
+        const exportExcel = document.getElementById('exportExcel');
+        const exportText = document.getElementById('exportText');
+        const exportPDF = document.getElementById('exportPDF');
+        const connectionStatus = document.getElementById('connectionStatus');
+        const tableStatus = document.getElementById('tableStatus');
+
+        // Global variables
+        let currentEditId = null;
+        let data = [];
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set current date and time
+            setCurrentDateTime();
+            
+            // Generate initial ID
+            generateNextId();
+            
+            // Test Supabase connection first
+            testSupabaseConnection();
+            
+            // Set up event listeners
+            setupEventListeners();
+        });
+
+        // Test Supabase connection
+        async function testSupabaseConnection() {
+            try {
+                connectionStatus.innerHTML = '<i class="fas fa-sync fa-spin"></i> Testing connection...';
+                
+                // Test connection by fetching table schema
+                const { data: tables, error } = await supabase
+                    .from('Excel')
+                    .select('*')
+                    .limit(1);
+                
+                if (error) {
+                    connectionStatus.innerHTML = `<i class="fas fa-times-circle" style="color: var(--danger);"></i> Connection failed: ${error.message}`;
+                    tableStatus.innerHTML = `<i class="fas fa-times-circle" style="color: var(--danger);"></i> Table error: ${error.message}`;
+                    
+                    // Provide guidance based on common errors
+                    if (error.message.includes('does not exist')) {
+                        tableStatus.innerHTML += `<br><br><strong>Solution:</strong> Please create a table named "Excel" in your Supabase database with columns: id (bigint primary key), name (text), mobile (text), created_at (timestamptz)`;
+                    }
+                } else {
+                    connectionStatus.innerHTML = '<i class="fas fa-check-circle" style="color: var(--success);"></i> Connected to Supabase successfully!';
+                    tableStatus.innerHTML = '<i class="fas fa-check-circle" style="color: var(--success);"></i> Table "Excel" is accessible';
+                    
+                    // Now load the data
+                    loadData();
+                }
+            } catch (error) {
+                connectionStatus.innerHTML = `<i class="fas fa-times-circle" style="color: var(--danger);"></i> Connection error: ${error.message}`;
+                console.error('Connection test failed:', error);
+            }
+        }
+
+        // Set up event listeners
+        function setupEventListeners() {
+            // Theme toggle
+            themeToggle.addEventListener('click', toggleTheme);
+            
+            // Form submission
+            dataForm.addEventListener('submit', handleFormSubmit);
+            
+            // Reset form
+            resetBtn.addEventListener('click', resetForm);
+            
+            // Edit modal
+            closeModal.addEventListener('click', closeEditModal);
+            cancelEdit.addEventListener('click', closeEditModal);
+            editForm.addEventListener('submit', handleEditSubmit);
+            
+            // Export buttons
+            exportExcel.addEventListener('click', exportToExcel);
+            exportText.addEventListener('click', exportToText);
+            exportPDF.addEventListener('click', exportToPDF);
+            
+            // Close modal when clicking outside
+            window.addEventListener('click', function(e) {
+                if (e.target === editModal) {
+                    closeEditModal();
+                }
+            });
+        }
+
+        // Toggle dark/light theme
+        function toggleTheme() {
+            document.body.classList.toggle('dark-mode');
+            const icon = themeToggle.querySelector('i');
+            if (document.body.classList.contains('dark-mode')) {
+                icon.classList.remove('fa-moon');
+                icon.classList.add('fa-sun');
+            } else {
+                icon.classList.remove('fa-sun');
+                icon.classList.add('fa-moon');
+            }
+        }
+
+        // Set current date and time
+        function setCurrentDateTime() {
+            const now = new Date();
+            createdAt.value = now.toLocaleString();
+        }
+
+        // Generate next ID
+        function generateNextId() {
+            // In a real app, this would come from the database
+            // For demo purposes, we'll generate based on existing data
+            const nextId = data.length > 0 ? Math.max(...data.map(item => parseInt(item.id))) + 1 : 1;
+            idField.value = nextId;
+        }
+
+        // Load data from Supabase
+        async function loadData() {
+            try {
+                showLoading(submitBtn);
+                
+                // Fetch data from Supabase
+                const { data: records, error } = await supabase
+                    .from('Excel')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+                
+                if (error) {
+                    throw error;
+                }
+                
+                console.log('Loaded data:', records); // Debug log
+                
+                // Format the data for display
+                data = records.map(record => ({
+                    id: record.id,
+                    name: record.name,
+                    mobile: record.mobile,
+                    created_at: new Date(record.created_at).toLocaleString()
+                }));
+                
+                renderTable();
+                hideLoading(submitBtn);
+                
+            } catch (error) {
+                console.error('Error loading data:', error);
+                showNotification('Failed to load data: ' + error.message, 'error');
+                hideLoading(submitBtn);
+            }
+        }
+
+        // Render table with data
+        function renderTable() {
+            if (data.length === 0) {
+                tableBody.innerHTML = '';
+                emptyState.style.display = 'block';
+                return;
+            }
+            
+            emptyState.style.display = 'none';
+            
+            tableBody.innerHTML = data.map(item => `
+                <tr>
+                    <td>${item.id}</td>
+                    <td>${item.name}</td>
+                    <td>${item.mobile}</td>
+                    <td>${item.created_at}</td>
+                    <td class="actions-cell">
+                        <button class="action-btn edit-btn" data-id="${item.id}">
+                            <i class="fas fa-edit"></i> Edit
+                        </button>
+                        <button class="action-btn delete-btn" data-id="${item.id}">
+                            <i class="fas fa-trash"></i> Delete
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+            
+            // Add event listeners to action buttons
+            document.querySelectorAll('.edit-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const id = this.getAttribute('data-id');
+                    openEditModal(id);
+                });
+            });
+            
+            document.querySelectorAll('.delete-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const id = this.getAttribute('data-id');
+                    deleteEntry(id);
+                });
+            });
+        }
+
+        // Handle form submission
+        async function handleFormSubmit(e) {
+            e.preventDefault();
+            
+            const name = document.getElementById('name').value.trim();
+            const mobile = document.getElementById('mobile').value.trim();
+            
+            if (!name || !mobile) {
+                showNotification('Please fill in all fields', 'error');
+                return;
+            }
+            
+            if (!/^\d{10}$/.test(mobile)) {
+                showNotification('Please enter a valid 10-digit mobile number', 'error');
+                return;
+            }
+            
+            try {
+                showLoading(submitBtn);
+                
+                // Insert into Supabase
+                const { data: newEntry, error } = await supabase
+                    .from('Excel')
+                    .insert([
+                        { 
+                            name: name, 
+                            mobile: mobile,
+                            created_at: new Date().toISOString()
+                        }
+                    ])
+                    .select();
+                
+                if (error) {
+                    throw error;
+                }
+                
+                console.log('Insert response:', newEntry); // Debug log
+                
+                // Add to local data array for immediate UI update
+                const formattedEntry = {
+                    id: newEntry[0].id,
+                    name: newEntry[0].name,
+                    mobile: newEntry[0].mobile,
+                    created_at: new Date(newEntry[0].created_at).toLocaleString()
+                };
+                
+                data.unshift(formattedEntry);
+                
+                // Update UI
+                renderTable();
+                resetForm();
+                generateNextId();
+                setCurrentDateTime();
+                
+                showNotification('Entry added successfully!');
+                hideLoading(submitBtn);
+                
+            } catch (error) {
+                console.error('Error adding entry:', error);
+                showNotification('Failed to add entry: ' + error.message, 'error');
+                hideLoading(submitBtn);
+            }
+        }
+
+        // Reset form
+        function resetForm() {
+            dataForm.reset();
+            setCurrentDateTime();
+        }
+
+        // Open edit modal
+        function openEditModal(id) {
+            console.log('Opening edit modal for ID:', id); // Debug log
+            
+            const entry = data.find(item => item.id == id);
+            if (!entry) {
+                console.error('Entry not found for ID:', id);
+                showNotification('Entry not found', 'error');
+                return;
+            }
+            
+            document.getElementById('editId').value = entry.id;
+            document.getElementById('editName').value = entry.name;
+            document.getElementById('editMobile').value = entry.mobile;
+            
+            currentEditId = id;
+            editModal.style.display = 'flex';
+            
+            console.log('Edit modal populated with:', { 
+                id: entry.id, 
+                name: entry.name, 
+                mobile: entry.mobile 
+            }); // Debug log
+        }
+
+        // Close edit modal
+        function closeEditModal() {
+            editModal.style.display = 'none';
+            currentEditId = null;
+            editForm.reset();
+        }
+
+        // Handle edit form submission
+        async function handleEditSubmit(e) {
+            e.preventDefault();
+            
+            const name = document.getElementById('editName').value.trim();
+            const mobile = document.getElementById('editMobile').value.trim();
+            const id = document.getElementById('editId').value;
+            
+            console.log('Edit form submitted:', { id, name, mobile }); // Debug log
+            
+            if (!name || !mobile) {
+                showNotification('Please fill in all fields', 'error');
+                return;
+            }
+            
+            if (!/^\d{10}$/.test(mobile)) {
+                showNotification('Please enter a valid 10-digit mobile number', 'error');
+                return;
+            }
+            
+            try {
+                showLoading(updateBtn);
+                
+                console.log('Updating record with ID:', currentEditId); // Debug log
+                
+                // Update in Supabase
+                const { data: updatedData, error } = await supabase
+                    .from('Excel')
+                    .update({ 
+                        name: name, 
+                        mobile: mobile 
+                    })
+                    .eq('id', currentEditId)
+                    .select();
+                
+                if (error) {
+                    throw error;
+                }
+                
+                console.log('Update response:', updatedData); // Debug log
+                
+                // Update local data
+                const entryIndex = data.findIndex(item => item.id == currentEditId);
+                if (entryIndex !== -1) {
+                    data[entryIndex].name = name;
+                    data[entryIndex].mobile = mobile;
+                }
+                
+                // Update UI
+                renderTable();
+                closeEditModal();
+                
+                showNotification('Entry updated successfully!');
+                hideLoading(updateBtn);
+                
+            } catch (error) {
+                console.error('Error updating entry:', error);
+                showNotification('Failed to update entry: ' + error.message, 'error');
+                hideLoading(updateBtn);
+            }
+        }
+
+        // Delete entry
+        async function deleteEntry(id) {
+            if (!confirm('Are you sure you want to delete this entry?')) {
+                return;
+            }
+            
+            try {
+                // Delete from Supabase
+                const { error } = await supabase
+                    .from('Excel')
+                    .delete()
+                    .eq('id', id);
+                
+                if (error) {
+                    throw error;
+                }
+                
+                // Remove from local data
+                data = data.filter(item => item.id != id);
+                
+                // Update UI
+                renderTable();
+                generateNextId();
+                
+                showNotification('Entry deleted successfully!');
+                
+            } catch (error) {
+                console.error('Error deleting entry:', error);
+                showNotification('Failed to delete entry: ' + error.message, 'error');
+            }
+        }
+
+        // Export to Excel
+        function exportToExcel() {
+            if (data.length === 0) {
+                showNotification('No data to export', 'warning');
+                return;
+            }
+            
+            try {
+                // Prepare data for export
+                const exportData = data.map(item => ({
+                    ID: item.id,
+                    Name: item.name,
+                    Mobile: item.mobile,
+                    'Created At': item.created_at
+                }));
+                
+                // Create worksheet
+                const ws = XLSX.utils.json_to_sheet(exportData);
+                
+                // Create workbook
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, 'Data');
+                
+                // Export to file
+                XLSX.writeFile(wb, 'data_export.xlsx');
+                
+                showNotification('Data exported to Excel successfully!');
+            } catch (error) {
+                console.error('Error exporting to Excel:', error);
+                showNotification('Failed to export to Excel', 'error');
+            }
+        }
+
+        // Export to Text
+        function exportToText() {
+            if (data.length === 0) {
+                showNotification('No data to export', 'warning');
+                return;
+            }
+            
+            try {
+                // Create text content
+                let textContent = 'ID\tName\tMobile\tCreated At\n';
+                textContent += data.map(item => 
+                    `${item.id}\t${item.name}\t${item.mobile}\t${item.created_at}`
+                ).join('\n');
+                
+                // Create blob and download
+                const blob = new Blob([textContent], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'data_export.txt';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                showNotification('Data exported to Text successfully!');
+            } catch (error) {
+                console.error('Error exporting to Text:', error);
+                showNotification('Failed to export to Text', 'error');
+            }
+        }
+
+        // Export to PDF
+        function exportToPDF() {
+            if (data.length === 0) {
+                showNotification('No data to export', 'warning');
+                return;
+            }
+            
+            try {
+                // Create PDF
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                
+                // Add title
+                doc.setFontSize(16);
+                doc.text('Data Export', 20, 20);
+                
+                // Add table headers
+                doc.setFontSize(12);
+                doc.text('ID', 20, 40);
+                doc.text('Name', 40, 40);
+                doc.text('Mobile', 90, 40);
+                doc.text('Created At', 140, 40);
+                
+                // Add table data
+                let yPosition = 50;
+                data.forEach(item => {
+                    doc.text(item.id.toString(), 20, yPosition);
+                    doc.text(item.name, 40, yPosition);
+                    doc.text(item.mobile, 90, yPosition);
+                    doc.text(item.created_at, 140, yPosition);
+                    yPosition += 10;
+                    
+                    // Add new page if needed
+                    if (yPosition > 280) {
+                        doc.addPage();
+                        yPosition = 20;
+                    }
+                });
+                
+                // Save PDF
+                doc.save('data_export.pdf');
+                
+                showNotification('Data exported to PDF successfully!');
+            } catch (error) {
+                console.error('Error exporting to PDF:', error);
+                showNotification('Failed to export to PDF', 'error');
+            }
+        }
+
+        // Show notification
+        function showNotification(message, type = 'success') {
+            notificationText.textContent = message;
+            notification.className = 'notification';
+            
+            if (type === 'error') {
+                notification.classList.add('error');
+                notification.querySelector('i').className = 'fas fa-exclamation-circle';
+            } else if (type === 'warning') {
+                notification.classList.add('warning');
+                notification.querySelector('i').className = 'fas fa-exclamation-triangle';
+            } else {
+                notification.querySelector('i').className = 'fas fa-check-circle';
+            }
+            
+            notification.classList.add('show');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+
+        // Show loading state
+        function showLoading(button) {
+            const originalText = button.innerHTML;
+            button.innerHTML = '<div class="loading"></div> Processing...';
+            button.disabled = true;
+            button.dataset.originalText = originalText;
+        }
+
+        // Hide loading state
+        function hideLoading(button) {
+            if (button.dataset.originalText) {
+                button.innerHTML = button.dataset.originalText;
+                button.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>
