@@ -553,7 +553,7 @@
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml5ZGFtdnJseHR3c25xdmZsYXhxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgwOTczMTIsImV4cCI6MjA3MzY3MzMxMn0.Z8m6XGyu9wsN_UJ8EZYr12BRemsO12_U8EEZ9JizQ6w';
         
         // Initialize Supabase client
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         // DOM Elements
         const themeToggle = document.getElementById('themeToggle');
@@ -602,7 +602,7 @@
                 connectionStatus.innerHTML = '<i class="fas fa-sync fa-spin"></i> Testing connection...';
                 
                 // Test connection by fetching table schema
-                const { data: tables, error } = await supabase
+                const { data: tables, error } = await client
                     .from('Excel')
                     .select('*')
                     .limit(1);
@@ -690,7 +690,7 @@
                 showLoading(submitBtn);
                 
                 // Fetch data from Supabase
-                const { data: records, error } = await supabase
+                const { data: records, error } = await client
                     .from('Excel')
                     .select('*')
                     .order('created_at', { ascending: false });
@@ -783,7 +783,7 @@
                 showLoading(submitBtn);
                 
                 // Insert into Supabase
-                const { data: newEntry, error } = await supabase
+                const { data: newEntry, error } = await client
                     .from('Excel')
                     .insert([
                         { 
@@ -890,7 +890,7 @@
                 console.log('Updating record with ID:', currentEditId); // Debug log
                 
                 // Update in Supabase
-                const { data: updatedData, error } = await supabase
+                const { data: updatedData, error } = await client
                     .from('Excel')
                     .update({ 
                         name: name, 
@@ -934,7 +934,7 @@
             
             try {
                 // Delete from Supabase
-                const { error } = await supabase
+                const { error } = await client
                     .from('Excel')
                     .delete()
                     .eq('id', id);
