@@ -168,7 +168,7 @@
         // --- Supabase Setup ---
         const supabaseUrl = 'https://iydamvrlxtwsnqvflaxq.supabase.co';
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml5ZGFtdnJseHR3c25xdmZsYXhxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgwOTczMTIsImV4cCI6MjA3MzY3MzMxMn0.Z8m6XGyu9wsN_UJ8EZYr12BRemsO12_U8EEZ9JizQ6w';
-        const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+        const client = window.supabase.createClient(supabaseUrl, supabaseKey);
         
         // --- Elements ---
         const nameInput = document.getElementById('name');
@@ -179,7 +179,7 @@
         
         // --- Load Data ---
         async function loadData() {
-            let { data, error } = await supabase
+            let { data, error } = await client
                 .from('Excel')
                 .select('*')
                 .order('id', { ascending: true });
@@ -210,7 +210,7 @@
             
             if (recordId.value) {
                 // Update
-                const { error } = await supabase
+                const { error } = await client
                     .from('Excel')
                     .update({ name, mobile })
                     .eq('id', recordId.value);
@@ -219,7 +219,7 @@
                 submitBtn.textContent = 'Add Data';
             } else {
                 // Insert
-                const { error } = await supabase
+                const { error } = await client
                     .from('Excel')
                     .insert([{ name, mobile, created_at: now }]);
                 if (error) return console.error(error);
@@ -231,7 +231,7 @@
         
         // --- Edit Record ---
         async function editRecord(id) {
-            const { data, error } = await supabase
+            const { data, error } = await client
                 .from('Excel')
                 .select('*')
                 .eq('id', id)
@@ -246,7 +246,7 @@
         // --- Delete Record ---
         async function deleteRecord(id) {
             if (!confirm('Are you sure?')) return;
-            const { error } = await supabase
+            const { error } = await client
                 .from('Excel')
                 .delete()
                 .eq('id', id);
