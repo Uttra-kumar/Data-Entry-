@@ -1249,7 +1249,7 @@
             
             // Initialize Supabase
             try {
-                supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
                 initializeDatabase();
             } catch (error) {
                 console.warn('Supabase not configured, using local storage');
@@ -1387,7 +1387,7 @@
             if (!supabase) return;
             
             try {
-                const { error } = await supabase
+                const { error } = await client
                     .from('bills')
                     .select('count')
                     .limit(1);
@@ -1430,7 +1430,7 @@
                 let result;
                 
                 if (supabase) {
-                    const { data, error } = await supabase
+                    const { data, error } = await client
                         .from('bills')
                         .insert([billData])
                         .select();
@@ -1464,7 +1464,7 @@
         async function loadBills() {
             try {
                 if (supabase) {
-                    const { data, error } = await supabase
+                    const { data, error } = await client
                         .from('bills')
                         .select('*')
                         .order('bill_date', { ascending: false });
@@ -1618,7 +1618,7 @@ function applyFilters() {
             
             try {
                 if (supabase) {
-                    const { error } = await supabase
+                    const { error } = await client
                         .from('bills')
                         .update(billData)
                         .eq('id', billId);
@@ -1654,7 +1654,7 @@ function applyFilters() {
             
             try {
                 if (supabase) {
-                    const { error } = await supabase
+                    const { error } = await client
                         .from('bills')
                         .delete()
                         .eq('id', billId);
