@@ -1,0 +1,1855 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monthly Savings Tracker - Full CRUD</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Include Supabase JS library -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #f5f9ff 0%, #e6eeff 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: 20px;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+        }
+        
+        header {
+            background: linear-gradient(90deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            padding: 25px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .logo i {
+            font-size: 2.5rem;
+        }
+        
+        .logo h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+        }
+        
+        .logo-subtitle {
+            font-size: 0.9rem;
+            opacity: 0.9;
+            margin-top: 5px;
+        }
+        
+        .current-time {
+            text-align: right;
+            font-size: 1.1rem;
+            background: rgba(255, 255, 255, 0.15);
+            padding: 12px 25px;
+            border-radius: 12px;
+            backdrop-filter: blur(5px);
+        }
+        
+        .main-content {
+            padding: 30px 40px;
+        }
+        
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+        
+        @media (max-width: 992px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .card {
+            background-color: white;
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.05);
+            border: 1px solid #eef2ff;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.1);
+        }
+        
+        .card-title {
+            color: #1e3c72;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f4ff;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 1.4rem;
+        }
+        
+        .card-title i {
+            color: #2a5298;
+        }
+        
+        .month-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding: 20px;
+            background: linear-gradient(135deg, #f0f7ff 0%, #e6eeff 100%);
+            border-radius: 12px;
+            border: 1px solid #d9e4ff;
+        }
+        
+        .month-name {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #1e3c72;
+        }
+        
+        .month-year {
+            font-size: 1.2rem;
+            color: #4a6bc2;
+            font-weight: 600;
+        }
+        
+        .progress-container {
+            margin: 30px 0;
+        }
+        
+        .progress-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .progress-bar {
+            height: 24px;
+            background-color: #eef2ff;
+            border-radius: 12px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #1e3c72 0%, #4a6bc2 100%);
+            border-radius: 12px;
+            transition: width 0.8s ease-in-out;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 15px;
+            color: white;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-top: 25px;
+        }
+        
+        @media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .stat-box {
+            background-color: #f8faff;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            border: 1px solid #e6eeff;
+        }
+        
+        .stat-value {
+            font-size: 2.2rem;
+            font-weight: 800;
+            color: #1e3c72;
+            margin-bottom: 8px;
+        }
+        
+        .stat-label {
+            font-size: 0.95rem;
+            color: #666;
+            font-weight: 600;
+        }
+        
+        .daily-amount-section {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .daily-amount-display {
+            font-size: 3.5rem;
+            font-weight: 800;
+            color: #1e3c72;
+            margin-bottom: 15px;
+            padding: 20px;
+            background: linear-gradient(135deg, #f0f7ff 0%, #e6eeff 100%);
+            border-radius: 16px;
+            border: 2px dashed #b8c8ff;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .save-button {
+            background: linear-gradient(90deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            border: none;
+            padding: 18px 30px;
+            border-radius: 14px;
+            font-size: 1.3rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 12px;
+            flex: 1;
+        }
+        
+        .save-button:hover:not(:disabled) {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 25px rgba(30, 60, 114, 0.2);
+        }
+        
+        .save-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        .save-button.saved {
+            background: linear-gradient(90deg, #2e7d32 0%, #4caf50 100%);
+        }
+        
+        .edit-button {
+            background: linear-gradient(90deg, #ff9800 0%, #ff5722 100%);
+            color: white;
+            border: none;
+            padding: 18px 25px;
+            border-radius: 14px;
+            font-size: 1.3rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .edit-button:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 25px rgba(255, 87, 34, 0.2);
+        }
+        
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 12px;
+            margin-top: 20px;
+        }
+        
+        .calendar-header {
+            text-align: center;
+            font-weight: 700;
+            color: #1e3c72;
+            padding: 12px 0;
+            background-color: #f0f7ff;
+            border-radius: 8px;
+            font-size: 1.1rem;
+        }
+        
+        .calendar-day {
+            aspect-ratio: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+            background-color: #f8faff;
+            border: 2px solid #e6eeff;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+            padding: 5px;
+        }
+        
+        .calendar-day:hover {
+            background-color: #f0f7ff;
+            transform: scale(1.05);
+        }
+        
+        .calendar-day.saved {
+            background-color: #e8f5e9;
+            border-color: #a5d6a7;
+        }
+        
+        .calendar-day.saved .day-number {
+            color: #2e7d32;
+            font-weight: 700;
+        }
+        
+        .calendar-day.today {
+            background-color: #e3f2fd;
+            border-color: #90caf9;
+        }
+        
+        .calendar-day.today .day-number {
+            color: #1565c0;
+            font-weight: 700;
+        }
+        
+        .day-number {
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        
+        .day-amount {
+            font-size: 0.8rem;
+            color: #666;
+            font-weight: 600;
+        }
+        
+        .day-amount.saved {
+            color: #2e7d32;
+        }
+        
+        .empty-day {
+            background-color: transparent;
+            border: none;
+            cursor: default;
+        }
+        
+        .empty-day:hover {
+            background-color: transparent;
+            transform: none;
+        }
+        
+        .history-section {
+            margin-top: 40px;
+        }
+        
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .history-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .action-btn {
+            background-color: #f0f7ff;
+            border: 1px solid #d9e4ff;
+            color: #1e3c72;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .action-btn:hover {
+            background-color: #e6eeff;
+            transform: translateY(-3px);
+        }
+        
+        .action-btn.delete {
+            background-color: #ffebee;
+            border-color: #ffcdd2;
+            color: #d32f2f;
+        }
+        
+        .action-btn.delete:hover {
+            background-color: #ffcdd2;
+        }
+        
+        .history-container {
+            max-height: 400px;
+            overflow-y: auto;
+            margin-top: 20px;
+        }
+        
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 18px 25px;
+            background-color: white;
+            border-radius: 12px;
+            margin-bottom: 12px;
+            border-left: 5px solid #1e3c72;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            transition: all 0.2s;
+        }
+        
+        .history-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.08);
+        }
+        
+        .history-item.selected {
+            background-color: #f0f7ff;
+            border-left: 5px solid #ff9800;
+        }
+        
+        .history-info {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        
+        .history-date {
+            font-weight: 600;
+            color: #1e3c72;
+            font-size: 1.1rem;
+        }
+        
+        .history-day {
+            font-size: 0.9rem;
+            color: #666;
+        }
+        
+        .history-amount {
+            font-weight: 700;
+            color: #2e7d32;
+            font-size: 1.4rem;
+        }
+        
+        .history-actions-container {
+            display: flex;
+            gap: 10px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .history-item:hover .history-actions-container {
+            opacity: 1;
+        }
+        
+        .history-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: none;
+        }
+        
+        .history-btn.edit {
+            background-color: #fff3e0;
+            color: #ff9800;
+        }
+        
+        .history-btn.edit:hover {
+            background-color: #ffe0b2;
+            transform: scale(1.1);
+        }
+        
+        .history-btn.delete {
+            background-color: #ffebee;
+            color: #f44336;
+        }
+        
+        .history-btn.delete:hover {
+            background-color: #ffcdd2;
+            transform: scale(1.1);
+        }
+        
+        .empty-history {
+            text-align: center;
+            padding: 40px;
+            color: #888;
+            font-style: italic;
+            font-size: 1.1rem;
+        }
+        
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .modal {
+            background-color: white;
+            border-radius: 16px;
+            padding: 30px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+            animation: modalSlideIn 0.3s ease-out;
+        }
+        
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1e3c72;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .modal-content {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .modal-input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .modal-input-group label {
+            font-weight: 600;
+            color: #4a6bc2;
+        }
+        
+        .modal-input {
+            padding: 15px;
+            border: 2px solid #d1dbff;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #1e3c72;
+            transition: all 0.3s;
+        }
+        
+        .modal-input:focus {
+            outline: none;
+            border-color: #1e3c72;
+            box-shadow: 0 0 0 3px rgba(30, 60, 114, 0.2);
+        }
+        
+        .modal-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .modal-btn {
+            flex: 1;
+            padding: 16px;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: none;
+        }
+        
+        .modal-btn.save {
+            background: linear-gradient(90deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+        }
+        
+        .modal-btn.save:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(30, 60, 114, 0.2);
+        }
+        
+        .modal-btn.cancel {
+            background-color: #f5f5f5;
+            color: #666;
+        }
+        
+        .modal-btn.cancel:hover {
+            background-color: #e0e0e0;
+            transform: translateY(-3px);
+        }
+        
+        .modal-btn.delete {
+            background: linear-gradient(90deg, #d32f2f 0%, #f44336 100%);
+            color: white;
+        }
+        
+        .modal-btn.delete:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(244, 67, 54, 0.2);
+        }
+        
+        .config-section {
+            margin-top: 30px;
+            padding: 25px;
+            background-color: #f8faff;
+            border-radius: 16px;
+            border: 1px solid #e6eeff;
+        }
+        
+        .config-title {
+            font-weight: 700;
+            color: #1e3c72;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.2rem;
+        }
+        
+        .config-inputs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+        
+        @media (max-width: 768px) {
+            .config-inputs {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .input-group label {
+            font-weight: 600;
+            color: #4a6bc2;
+            font-size: 0.95rem;
+        }
+        
+        .input-box {
+            padding: 15px;
+            border: 2px solid #d1dbff;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #1e3c72;
+            transition: all 0.3s;
+        }
+        
+        .input-box:focus {
+            outline: none;
+            border-color: #1e3c72;
+            box-shadow: 0 0 0 3px rgba(30, 60, 114, 0.2);
+        }
+        
+        .config-btn {
+            background-color: #1e3c72;
+            color: white;
+            border: none;
+            padding: 16px 30px;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .config-btn:hover {
+            background-color: #2a5298;
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(30, 60, 114, 0.2);
+        }
+        
+        .db-status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.95rem;
+            padding: 12px 18px;
+            border-radius: 10px;
+            margin-top: 20px;
+            font-weight: 600;
+        }
+        
+        .db-connected {
+            color: #155724;
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .db-disconnected {
+            color: #721c24;
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .status-message {
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            font-weight: 600;
+            margin-top: 20px;
+            display: none;
+        }
+        
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            display: block;
+        }
+        
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            display: block;
+        }
+        
+        .warning {
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+            display: block;
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(0, 0, 0, 0.1);
+            border-radius: 50%;
+            border-top-color: #1e3c72;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        footer {
+            text-align: center;
+            padding: 25px;
+            color: #666;
+            font-size: 0.9rem;
+            border-top: 1px solid #eee;
+            background-color: #f8faff;
+        }
+        
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
+        }
+        
+        /* Tooltip for calendar days */
+        .calendar-day::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #333;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 0.8rem;
+            white-space: nowrap;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s;
+            z-index: 10;
+        }
+        
+        .calendar-day:hover::after {
+            opacity: 1;
+            visibility: visible;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">
+                <i class="fas fa-calendar-check"></i>
+                <div>
+                    <h1>Monthly Savings Tracker</h1>
+                    <div class="logo-subtitle">Save ₹200 Daily, Achieve ₹6000 Monthly | Full CRUD Operations</div>
+                </div>
+            </div>
+            <div class="current-time">
+                <div id="current-date"></div>
+                <div id="current-time"></div>
+            </div>
+        </header>
+        
+        <div class="main-content">
+            <div class="dashboard-grid">
+                <div class="card">
+                    <h2 class="card-title"><i class="fas fa-chart-line"></i> Monthly Progress</h2>
+                    
+                    <div class="month-info">
+                        <div>
+                            <div class="month-name" id="current-month">April</div>
+                            <div class="month-year" id="current-year-display">2024</div>
+                        </div>
+                        <div class="stat-box" style="padding: 15px;">
+                            <div class="stat-value" id="days-saved">0</div>
+                            <div class="stat-label">Days Saved</div>
+                        </div>
+                    </div>
+                    
+                    <div class="progress-container">
+                        <div class="progress-label">
+                            <span>Monthly Target: ₹6000</span>
+                            <span id="current-amount">₹0</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progress-fill" style="width: 0%">0%</div>
+                        </div>
+                    </div>
+                    
+                    <div class="stats-grid">
+                        <div class="stat-box">
+                            <div class="stat-value" id="total-saved">₹0</div>
+                            <div class="stat-label">Total Saved</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value" id="remaining-amount">₹6000</div>
+                            <div class="stat-label">Remaining</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value" id="daily-target">₹200</div>
+                            <div class="stat-label">Daily Amount</div>
+                        </div>
+                    </div>
+                    
+                    <div class="daily-amount-section">
+                        <div class="daily-amount-display" id="daily-amount-display">₹200</div>
+                        <div class="action-buttons">
+                            <button id="save-button" class="save-button">
+                                <i class="fas fa-save"></i> Save ₹200 for Today
+                            </button>
+                            <button id="edit-today-button" class="edit-button">
+                                <i class="fas fa-edit"></i> Edit
+                            </button>
+                        </div>
+                        <div id="status-message" class="status-message"></div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <h2 class="card-title"><i class="fas fa-calendar-alt"></i> Monthly Calendar</h2>
+                    <div id="calendar-container" class="calendar-grid">
+                        <!-- Calendar will be generated here -->
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card history-section">
+                <div class="history-header">
+                    <h2 class="card-title"><i class="fas fa-history"></i> This Month's Savings</h2>
+                    <div class="history-actions">
+                        <button id="select-all-btn" class="action-btn">
+                            <i class="fas fa-check-square"></i> Select All
+                        </button>
+                        <button id="delete-selected-btn" class="action-btn delete">
+                            <i class="fas fa-trash"></i> Delete Selected
+                        </button>
+                    </div>
+                </div>
+                <div class="history-container" id="history-container">
+                    <div class="empty-history">No savings recorded yet. Save today's amount to get started!</div>
+                </div>
+            </div>
+            
+            <div class="config-section">
+                <div class="config-title">
+                    <i class="fas fa-database"></i> Supabase Configuration
+                </div>
+                <div class="config-inputs">
+                    <div class="input-group">
+                        <label for="supabase-url"><i class="fas fa-link"></i> Supabase URL</label>
+                        <input type="text" id="supabase-url" class="input-box" placeholder="https://your-project.supabase.co">
+                    </div>
+                    <div class="input-group">
+                        <label for="supabase-key"><i class="fas fa-key"></i> Supabase Anon Key</label>
+                        <input type="password" id="supabase-key" class="input-box" placeholder="your-anon-key">
+                    </div>
+                </div>
+                <button id="config-btn" class="config-btn">
+                    <i class="fas fa-save"></i> Save Configuration
+                </button>
+                <div class="db-status" id="db-status">
+                    <i class="fas fa-database"></i>
+                    <span>Configure database connection</span>
+                </div>
+            </div>
+        </div>
+        
+        <footer>
+            <p>Monthly Savings Tracker with Full CRUD Operations &copy; <span id="current-year"></span> | Fixed Daily Amount: ₹200 | Monthly Target: ₹6000</p>
+            <p class="footer-note">Create, Read, Update, and Delete your savings records</p>
+        </footer>
+    </div>
+    
+    <!-- Edit Modal -->
+    <div class="modal-overlay" id="edit-modal">
+        <div class="modal">
+            <h2 class="modal-title"><i class="fas fa-edit"></i> Edit Savings Entry</h2>
+            <div class="modal-content">
+                <div class="modal-input-group">
+                    <label for="edit-date">Date</label>
+                    <input type="date" id="edit-date" class="modal-input" disabled>
+                </div>
+                <div class="modal-input-group">
+                    <label for="edit-amount">Amount (₹)</label>
+                    <input type="number" id="edit-amount" class="modal-input" min="0" step="0.01" value="200">
+                </div>
+            </div>
+            <div class="modal-buttons">
+                <button id="save-edit-btn" class="modal-btn save">Save Changes</button>
+                <button id="delete-entry-btn" class="modal-btn delete">Delete Entry</button>
+                <button id="cancel-edit-btn" class="modal-btn cancel">Cancel</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Delete Confirmation Modal -->
+    <div class="modal-overlay" id="delete-modal">
+        <div class="modal">
+            <h2 class="modal-title"><i class="fas fa-exclamation-triangle"></i> Confirm Delete</h2>
+            <div class="modal-content">
+                <p id="delete-message">Are you sure you want to delete this savings entry?</p>
+                <p style="color: #f44336; font-weight: 600;">This action cannot be undone!</p>
+            </div>
+            <div class="modal-buttons">
+                <button id="confirm-delete-btn" class="modal-btn delete">Yes, Delete</button>
+                <button id="cancel-delete-btn" class="modal-btn cancel">Cancel</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Bulk Delete Modal -->
+    <div class="modal-overlay" id="bulk-delete-modal">
+        <div class="modal">
+            <h2 class="modal-title"><i class="fas fa-exclamation-triangle"></i> Confirm Bulk Delete</h2>
+            <div class="modal-content">
+                <p id="bulk-delete-message">Are you sure you want to delete <span id="selected-count">0</span> selected entries?</p>
+                <p style="color: #f44336; font-weight: 600;">This action cannot be undone!</p>
+            </div>
+            <div class="modal-buttons">
+                <button id="confirm-bulk-delete-btn" class="modal-btn delete">Yes, Delete All</button>
+                <button id="cancel-bulk-delete-btn" class="modal-btn cancel">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        const DAILY_AMOUNT = 200;
+        const MONTHLY_TARGET = 6000;
+        
+        // Supabase setup
+        let client = null;
+        let supabaseUrl = '';
+        let supabaseKey = '';
+        let isConnected = false;
+        
+        // Data
+        let monthlyData = [];
+        let currentMonth = '';
+        let currentYear = '';
+        let selectedEntries = new Set(); // For multi-select deletion
+        let currentEditId = null; // For editing
+        
+        // DOM Elements
+        const currentDateElement = document.getElementById('current-date');
+        const currentTimeElement = document.getElementById('current-time');
+        const currentMonthElement = document.getElementById('current-month');
+        const currentYearElement = document.getElementById('current-year-display');
+        const daysSavedElement = document.getElementById('days-saved');
+        const currentAmountElement = document.getElementById('current-amount');
+        const progressFillElement = document.getElementById('progress-fill');
+        const totalSavedElement = document.getElementById('total-saved');
+        const remainingAmountElement = document.getElementById('remaining-amount');
+        const dailyTargetElement = document.getElementById('daily-target');
+        const dailyAmountDisplayElement = document.getElementById('daily-amount-display');
+        const saveButtonElement = document.getElementById('save-button');
+        const editTodayButton = document.getElementById('edit-today-button');
+        const statusMessageElement = document.getElementById('status-message');
+        const calendarContainerElement = document.getElementById('calendar-container');
+        const historyContainerElement = document.getElementById('history-container');
+        const dbStatusElement = document.getElementById('db-status');
+        const supabaseUrlInput = document.getElementById('supabase-url');
+        const supabaseKeyInput = document.getElementById('supabase-key');
+        const configButton = document.getElementById('config-btn');
+        const selectAllButton = document.getElementById('select-all-btn');
+        const deleteSelectedButton = document.getElementById('delete-selected-btn');
+        
+        // Modal Elements
+        const editModal = document.getElementById('edit-modal');
+        const deleteModal = document.getElementById('delete-modal');
+        const bulkDeleteModal = document.getElementById('bulk-delete-modal');
+        const editDateInput = document.getElementById('edit-date');
+        const editAmountInput = document.getElementById('edit-amount');
+        const saveEditButton = document.getElementById('save-edit-btn');
+        const deleteEntryButton = document.getElementById('delete-entry-btn');
+        const cancelEditButton = document.getElementById('cancel-edit-btn');
+        const deleteMessageElement = document.getElementById('delete-message');
+        const confirmDeleteButton = document.getElementById('confirm-delete-btn');
+        const cancelDeleteButton = document.getElementById('cancel-delete-btn');
+        const bulkDeleteMessageElement = document.getElementById('bulk-delete-message');
+        const selectedCountElement = document.getElementById('selected-count');
+        const confirmBulkDeleteButton = document.getElementById('confirm-bulk-delete-btn');
+        const cancelBulkDeleteButton = document.getElementById('cancel-bulk-delete-btn');
+        
+        // Initialize current month and year
+        function initCurrentMonthYear() {
+            const now = new Date();
+            const monthNames = ["January", "February", "March", "April", "May", "June",
+                "July", "August", "September", "October", "November", "December"];
+            
+            currentMonth = monthNames[now.getMonth()];
+            currentYear = now.getFullYear().toString();
+            
+            currentMonthElement.textContent = currentMonth;
+            currentYearElement.textContent = currentYear;
+            dailyAmountDisplayElement.textContent = `₹${DAILY_AMOUNT}`;
+            dailyTargetElement.textContent = `₹${DAILY_AMOUNT}`;
+            remainingAmountElement.textContent = `₹${MONTHLY_TARGET}`;
+        }
+        
+        // Update current date and time
+        function updateDateTime() {
+            const now = new Date();
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            currentDateElement.textContent = now.toLocaleDateString('en-IN', options);
+            currentTimeElement.textContent = now.toLocaleTimeString('en-IN', { hour12: true });
+        }
+        
+        // Initialize Supabase
+        function initSupabase() {
+            supabaseUrl = localStorage.getItem('supabaseUrl') || '';
+            supabaseKey = localStorage.getItem('supabaseKey') || '';
+            
+            supabaseUrlInput.value = supabaseUrl;
+            supabaseKeyInput.value = supabaseKey;
+            
+            if (supabaseUrl && supabaseKey) {
+                try {
+                    client = window.supabase.createClient(supabaseUrl, supabaseKey);
+                    testConnection();
+                } catch (error) {
+                    updateDbStatus(false, 'Error creating Supabase client');
+                    console.error('Supabase initialization error:', error);
+                }
+            } else {
+                updateDbStatus(false, 'Please configure Supabase URL and Key');
+            }
+        }
+        
+        // Test Supabase connection
+        async function testConnection() {
+            try {
+                updateDbStatus(null, 'Testing connection...');
+                
+                // Try to fetch a small amount of data to test connection
+                const { data, error } = await client
+                    .from('monthly_savings')
+                    .select('count')
+                    .limit(1);
+                
+                if (error) {
+                    if (error.message.includes('relation') && error.message.includes('does not exist')) {
+                        updateDbStatus(true, 'Connected - Tables need to be created');
+                        isConnected = true;
+                        await createTablesIfNotExist();
+                    } else {
+                        updateDbStatus(false, `Connection error: ${error.message}`);
+                        isConnected = false;
+                    }
+                } else {
+                    updateDbStatus(true, 'Connected to Supabase');
+                    isConnected = true;
+                }
+                
+                // Load data if connected
+                if (isConnected) {
+                    await loadDataFromSupabase();
+                } else {
+                    loadDataFromLocalStorage();
+                }
+            } catch (error) {
+                updateDbStatus(false, `Connection failed: ${error.message}`);
+                isConnected = false;
+                loadDataFromLocalStorage();
+            }
+        }
+        
+        // Create tables if they don't exist
+        async function createTablesIfNotExist() {
+            try {
+                showStatus('Setting up database tables...', 'success');
+            } catch (error) {
+                console.error('Table creation error:', error);
+            }
+        }
+        
+        // Update database connection status
+        function updateDbStatus(connected, message) {
+            dbStatusElement.className = 'db-status';
+            
+            if (connected === true) {
+                dbStatusElement.classList.add('db-connected');
+                dbStatusElement.innerHTML = `<i class="fas fa-check-circle"></i> <span>${message}</span>`;
+            } else if (connected === false) {
+                dbStatusElement.classList.add('db-disconnected');
+                dbStatusElement.innerHTML = `<i class="fas fa-times-circle"></i> <span>${message}</span>`;
+            } else {
+                dbStatusElement.innerHTML = `<div class="loading"></div> <span>${message}</span>`;
+            }
+        }
+        
+        // Save Supabase configuration
+        function saveSupabaseConfig() {
+            const url = supabaseUrlInput.value.trim();
+            const key = supabaseKeyInput.value.trim();
+            
+            if (!url || !key) {
+                showStatus('Please enter both Supabase URL and Key', 'error');
+                return;
+            }
+            
+            localStorage.setItem('supabaseUrl', url);
+            localStorage.setItem('supabaseKey', key);
+            
+            supabaseUrl = url;
+            supabaseKey = key;
+            
+            // Reinitialize Supabase client
+            client = window.supabase.createClient(supabaseUrl, supabaseKey);
+            
+            showStatus('Supabase configuration saved', 'success');
+            testConnection();
+        }
+        
+        // Load data from Supabase
+        async function loadDataFromSupabase() {
+            try {
+                updateDbStatus(null, 'Loading data...');
+                
+                const currentDate = new Date();
+                const currentMonthYear = `${currentMonth} ${currentYear}`;
+                
+                // Load monthly savings for current month
+                const { data, error } = await client
+                    .from('monthly_savings')
+                    .select('*')
+                    .eq('month_year', currentMonthYear)
+                    .order('savings_date', { ascending: true });
+                
+                if (error) {
+                    throw error;
+                }
+                
+                monthlyData = data || [];
+                selectedEntries.clear(); // Clear selections when loading new data
+                
+                // Update UI with loaded data
+                updateDashboard();
+                generateCalendar();
+                updateHistory();
+                
+                updateDbStatus(true, `Loaded ${monthlyData.length} savings records`);
+                
+                // Save to localStorage as backup
+                saveDataToLocalStorage();
+                
+            } catch (error) {
+                console.error('Error loading data from Supabase:', error);
+                updateDbStatus(false, `Error loading data: ${error.message}`);
+                loadDataFromLocalStorage();
+            }
+        }
+        
+        // Load data from localStorage as fallback
+        function loadDataFromLocalStorage() {
+            const currentMonthYear = `${currentMonth} ${currentYear}`;
+            const savedData = localStorage.getItem(`monthlySavings_${currentMonthYear}`);
+            
+            if (savedData) {
+                monthlyData = JSON.parse(savedData);
+            }
+            
+            selectedEntries.clear(); // Clear selections when loading new data
+            
+            updateDashboard();
+            generateCalendar();
+            updateHistory();
+        }
+        
+        // Save data to localStorage as backup
+        function saveDataToLocalStorage() {
+            const currentMonthYear = `${currentMonth} ${currentYear}`;
+            localStorage.setItem(`monthlySavings_${currentMonthYear}`, JSON.stringify(monthlyData));
+        }
+        
+        // Update dashboard with current data
+        function updateDashboard() {
+            const totalSaved = monthlyData.reduce((sum, entry) => sum + entry.amount, 0);
+            const daysSaved = monthlyData.length;
+            const remaining = MONTHLY_TARGET - totalSaved;
+            const progressPercent = Math.min(100, (totalSaved / MONTHLY_TARGET) * 100);
+            
+            // Update UI elements
+            totalSavedElement.textContent = `₹${totalSaved}`;
+            currentAmountElement.textContent = `₹${totalSaved}`;
+            daysSavedElement.textContent = daysSaved;
+            remainingAmountElement.textContent = `₹${remaining > 0 ? remaining : 0}`;
+            progressFillElement.style.width = `${progressPercent}%`;
+            progressFillElement.textContent = `${Math.round(progressPercent)}%`;
+            
+            // Update save button based on whether today is saved
+            const today = new Date();
+            const todayDateString = formatDateForStorage(today);
+            const todayEntry = monthlyData.find(entry => entry.savings_date === todayDateString);
+            
+            if (todayEntry) {
+                saveButtonElement.innerHTML = '<i class="fas fa-check-circle"></i> ₹200 Saved Today';
+                saveButtonElement.classList.add('saved');
+                saveButtonElement.disabled = true;
+                editTodayButton.disabled = false;
+            } else {
+                saveButtonElement.innerHTML = '<i class="fas fa-save"></i> Save ₹200 for Today';
+                saveButtonElement.classList.remove('saved');
+                saveButtonElement.disabled = false;
+                editTodayButton.disabled = true;
+            }
+        }
+        
+        // Generate calendar for current month
+        function generateCalendar() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = now.getMonth();
+            const today = now.getDate();
+            
+            // Get first day of month
+            const firstDay = new Date(year, month, 1);
+            // Get last day of month
+            const lastDay = new Date(year, month + 1, 0);
+            // Get number of days in month
+            const daysInMonth = lastDay.getDate();
+            // Get day of week for first day (0 = Sunday, 1 = Monday, etc.)
+            const firstDayOfWeek = firstDay.getDay();
+            
+            // Clear calendar container
+            calendarContainerElement.innerHTML = '';
+            
+            // Add day headers
+            const dayHeaders = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            dayHeaders.forEach(day => {
+                const header = document.createElement('div');
+                header.className = 'calendar-header';
+                header.textContent = day;
+                calendarContainerElement.appendChild(header);
+            });
+            
+            // Add empty cells for days before first day of month
+            for (let i = 0; i < firstDayOfWeek; i++) {
+                const emptyDay = document.createElement('div');
+                emptyDay.className = 'calendar-day empty-day';
+                calendarContainerElement.appendChild(emptyDay);
+            }
+            
+            // Add cells for each day of the month
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dayElement = document.createElement('div');
+                dayElement.className = 'calendar-day';
+                
+                // Check if this day is today
+                if (day === today) {
+                    dayElement.classList.add('today');
+                }
+                
+                // Check if this day has been saved
+                const dateString = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const savedEntry = monthlyData.find(entry => entry.savings_date === dateString);
+                
+                if (savedEntry) {
+                    dayElement.classList.add('saved');
+                    dayElement.setAttribute('data-tooltip', `₹${savedEntry.amount} saved on ${formatDisplayDate(new Date(dateString))} (Click to edit)`);
+                    
+                    // Add click event to edit this day
+                    dayElement.addEventListener('click', () => {
+                        openEditModal(savedEntry);
+                    });
+                } else if (day < today) {
+                    dayElement.setAttribute('data-tooltip', `₹${DAILY_AMOUNT} not saved on ${day} ${currentMonth} (Click to save)`);
+                    
+                    // Add click event to save for this day
+                    dayElement.addEventListener('click', () => {
+                        saveForDate(dateString);
+                    });
+                } else if (day === today) {
+                    dayElement.setAttribute('data-tooltip', 'Today - Click to save ₹200');
+                    
+                    // Add click event for today
+                    dayElement.addEventListener('click', () => {
+                        if (!savedEntry) {
+                            saveForDate(dateString);
+                        } else {
+                            openEditModal(savedEntry);
+                        }
+                    });
+                } else {
+                    dayElement.setAttribute('data-tooltip', 'Future day');
+                }
+                
+                // Day number
+                const dayNumber = document.createElement('div');
+                dayNumber.className = 'day-number';
+                dayNumber.textContent = day;
+                dayElement.appendChild(dayNumber);
+                
+                // Amount indicator
+                const dayAmount = document.createElement('div');
+                dayAmount.className = 'day-amount';
+                dayAmount.textContent = savedEntry ? '₹200' : '₹0';
+                if (savedEntry) dayAmount.classList.add('saved');
+                dayElement.appendChild(dayAmount);
+                
+                calendarContainerElement.appendChild(dayElement);
+            }
+        }
+        
+        // Update history display
+        function updateHistory() {
+            if (monthlyData.length === 0) {
+                historyContainerElement.innerHTML = '<div class="empty-history">No savings recorded yet. Save today\'s amount to get started!</div>';
+                return;
+            }
+            
+            // Sort entries by date (newest first)
+            const sortedEntries = [...monthlyData].sort((a, b) => 
+                new Date(b.savings_date) - new Date(a.savings_date)
+            );
+            
+            historyContainerElement.innerHTML = '';
+            
+            sortedEntries.forEach(entry => {
+                const historyItem = document.createElement('div');
+                historyItem.className = 'history-item';
+                historyItem.dataset.id = entry.id;
+                
+                // Add selected class if this entry is selected
+                if (selectedEntries.has(entry.id)) {
+                    historyItem.classList.add('selected');
+                }
+                
+                const date = new Date(entry.savings_date);
+                const formattedDate = formatDisplayDate(date);
+                const dayOfWeek = date.toLocaleDateString('en-IN', { weekday: 'long' });
+                
+                historyItem.innerHTML = `
+                    <div class="history-info">
+                        <div class="history-date">${formattedDate}</div>
+                        <div class="history-day">${dayOfWeek}</div>
+                    </div>
+                    <div class="history-amount">₹${entry.amount}</div>
+                    <div class="history-actions-container">
+                        <button class="history-btn edit" data-id="${entry.id}">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="history-btn delete" data-id="${entry.id}">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                `;
+                
+                // Add click event for selecting/deselecting
+                historyItem.addEventListener('click', (e) => {
+                    if (!e.target.closest('.history-btn')) {
+                        toggleSelectEntry(entry.id);
+                    }
+                });
+                
+                // Add edit button event
+                const editBtn = historyItem.querySelector('.history-btn.edit');
+                editBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    openEditModal(entry);
+                });
+                
+                // Add delete button event
+                const deleteBtn = historyItem.querySelector('.history-btn.delete');
+                deleteBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    openDeleteModal(entry);
+                });
+                
+                historyContainerElement.appendChild(historyItem);
+            });
+        }
+        
+        // Toggle selection of an entry
+        function toggleSelectEntry(id) {
+            if (selectedEntries.has(id)) {
+                selectedEntries.delete(id);
+            } else {
+                selectedEntries.add(id);
+            }
+            
+            // Update UI
+            const historyItem = document.querySelector(`.history-item[data-id="${id}"]`);
+            if (historyItem) {
+                historyItem.classList.toggle('selected');
+            }
+            
+            // Update bulk delete button
+            updateBulkDeleteButton();
+        }
+        
+        // Select all entries
+        function selectAllEntries() {
+            selectedEntries.clear();
+            
+            monthlyData.forEach(entry => {
+                selectedEntries.add(entry.id);
+            });
+            
+            // Update UI
+            updateHistory();
+            updateBulkDeleteButton();
+        }
+        
+        // Update bulk delete button state
+        function updateBulkDeleteButton() {
+            const count = selectedEntries.size;
+            deleteSelectedButton.disabled = count === 0;
+            deleteSelectedButton.innerHTML = `<i class="fas fa-trash"></i> Delete Selected (${count})`;
+        }
+        
+        // Open edit modal
+        function openEditModal(entry) {
+            currentEditId = entry.id;
+            editDateInput.value = entry.savings_date;
+            editAmountInput.value = entry.amount;
+            editModal.style.display = 'flex';
+        }
+        
+        // Close edit modal
+        function closeEditModal() {
+            editModal.style.display = 'none';
+            currentEditId = null;
+        }
+        
+        // Open delete modal
+        function openDeleteModal(entry) {
+            currentEditId = entry.id;
+            const date = new Date(entry.savings_date);
+            const formattedDate = formatDisplayDate(date);
+            deleteMessageElement.textContent = `Are you sure you want to delete the savings entry for ${formattedDate} (₹${entry.amount})?`;
+            deleteModal.style.display = 'flex';
+        }
+        
+        // Close delete modal
+        function closeDeleteModal() {
+            deleteModal.style.display = 'none';
+            currentEditId = null;
+        }
+        
+        // Open bulk delete modal
+        function openBulkDeleteModal() {
+            selectedCountElement.textContent = selectedEntries.size;
+            bulkDeleteModal.style.display = 'flex';
+        }
+        
+        // Close bulk delete modal
+        function closeBulkDeleteModal() {
+            bulkDeleteModal.style.display = 'none';
+        }
+        
+        // Format date for display
+        function formatDisplayDate(date) {
+            const options = { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' };
+            return date.toLocaleDateString('en-IN', options);
+        }
+        
+        // Format date for storage (YYYY-MM-DD)
+        function formatDateForStorage(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+        
+        // Show status message
+        function showStatus(message, type) {
+            statusMessageElement.textContent = message;
+            statusMessageElement.className = `status-message ${type}`;
+            
+            setTimeout(() => {
+                statusMessageElement.style.display = 'none';
+            }, 3000);
+        }
+        
+        // Save for today
+        async function saveForToday() {
+            const today = new Date();
+            const todayDateString = formatDateForStorage(today);
+            await saveForDate(todayDateString);
+        }
+        
+        // Save for a specific date
+        async function saveForDate(dateString) {
+            if (!isConnected) {
+                showStatus('Not connected to database. Please configure Supabase.', 'error');
+                return;
+            }
+            
+            // Disable button while saving
+            saveButtonElement.disabled = true;
+            saveButtonElement.innerHTML = '<div class="loading"></div> Saving...';
+            
+            try {
+                const currentMonthYear = `${currentMonth} ${currentYear}`;
+                
+                // Insert new entry
+                const result = await client
+                    .from('monthly_savings')
+                    .insert([
+                        {
+                            month_year: currentMonthYear,
+                            savings_date: dateString,
+                            amount: DAILY_AMOUNT,
+                            created_at: new Date().toISOString(),
+                            updated_at: new Date().toISOString()
+                        }
+                    ]);
+                
+                if (result.error) {
+                    throw result.error;
+                }
+                
+                showStatus(`₹${DAILY_AMOUNT} saved successfully for ${formatDisplayDate(new Date(dateString))}`, 'success');
+                
+                // Reload data from Supabase
+                await loadDataFromSupabase();
+                
+            } catch (error) {
+                console.error('Error saving to Supabase:', error);
+                showStatus(`Error saving data: ${error.message}`, 'error');
+                
+                // Save locally as fallback
+                const currentMonthYear = `${currentMonth} ${currentYear}`;
+                
+                monthlyData.push({
+                    id: Date.now(), // Temporary ID for local storage
+                    month_year: currentMonthYear,
+                    savings_date: dateString,
+                    amount: DAILY_AMOUNT,
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString()
+                });
+                
+                updateDashboard();
+                generateCalendar();
+                updateHistory();
+                saveDataToLocalStorage();
+            } finally {
+                // Re-enable button if not today
+                const today = new Date();
+                const todayDateString = formatDateForStorage(today);
+                if (dateString !== todayDateString) {
+                    saveButtonElement.disabled = false;
+                    saveButtonElement.innerHTML = '<i class="fas fa-save"></i> Save ₹200 for Today';
+                }
+            }
+        }
+        
+        // Update an existing entry
+        async function updateEntry() {
+            if (!isConnected || !currentEditId) {
+                showStatus('Not connected to database or no entry selected.', 'error');
+                return;
+            }
+            
+            const newAmount = parseFloat(editAmountInput.value);
+            
+            if (isNaN(newAmount) || newAmount <= 0) {
+                showStatus('Please enter a valid amount greater than 0', 'error');
+                return;
+            }
+            
+            // Disable button while saving
+            saveEditButton.disabled = true;
+            saveEditButton.innerHTML = '<div class="loading"></div> Updating...';
+            
+            try {
+                const result = await client
+                    .from('monthly_savings')
+                    .update({ 
+                        amount: newAmount,
+                        updated_at: new Date().toISOString() 
+                    })
+                    .eq('id', currentEditId);
+                
+                if (result.error) {
+                    throw result.error;
+                }
+                
+                showStatus(`Entry updated to ₹${newAmount} successfully`, 'success');
+                
+                // Reload data from Supabase
+                await loadDataFromSupabase();
+                closeEditModal();
+                
+            } catch (error) {
+                console.error('Error updating entry:', error);
+                showStatus(`Error updating entry: ${error.message}`, 'error');
+                
+                // Update locally as fallback
+                const entryIndex = monthlyData.findIndex(entry => entry.id === currentEditId);
+                if (entryIndex !== -1) {
+                    monthlyData[entryIndex].amount = newAmount;
+                    monthlyData[entryIndex].updated_at = new Date().toISOString();
+                }
+                
+                updateDashboard();
+                generateCalendar();
+                updateHistory();
+                saveDataToLocalStorage();
+                closeEditModal();
+            } finally {
+                saveEditButton.disabled = false;
+                saveEditButton.textContent = 'Save Changes';
+            }
+        }
+        
+        // Delete an entry
+        async function deleteEntry() {
+            if (!isConnected || !currentEditId) {
+                showStatus('Not connected to database or no entry selected.', 'error');
+                return;
+            }
+            
+            // Disable button while deleting
+            confirmDeleteButton.disabled = true;
+            confirmDeleteButton.innerHTML = '<div class="loading"></div> Deleting...';
+            
+            try {
+                const result = await client
+                    .from('monthly_savings')
+                    .delete()
+                    .eq('id', currentEditId);
+                
+                if (result.error) {
+                    throw result.error;
+                }
+                
+                showStatus('Entry deleted successfully', 'success');
+                
+                // Reload data from Supabase
+                await loadDataFromSupabase();
+                closeDeleteModal();
+                
+            } catch (error) {
+                console.error('Error deleting entry:', error);
+                showStatus(`Error deleting entry: ${error.message}`, 'error');
+                
+                // Delete locally as fallback
+                const entryIndex = monthlyData.findIndex(entry => entry.id === currentEditId);
+                if (entryIndex !== -1) {
+                    monthlyData.splice(entryIndex, 1);
+                }
+                
+                updateDashboard();
+                generateCalendar();
+                updateHistory();
+                saveDataToLocalStorage();
+                closeDeleteModal();
+            } finally {
+                confirmDeleteButton.disabled = false;
+                confirmDeleteButton.textContent = 'Yes, Delete';
+            }
+        }
+        
+        // Delete selected entries
+        async function deleteSelectedEntries() {
+            if (!isConnected || selectedEntries.size === 0) {
+                showStatus('Not connected to database or no entries selected.', 'error');
+                return;
+            }
+            
+            const selectedIds = Array.from(selectedEntries);
+            
+            // Disable button while deleting
+            confirmBulkDeleteButton.disabled = true;
+            confirmBulkDeleteButton.innerHTML = '<div class="loading"></div> Deleting...';
+            
+            try {
+                const result = await client
+                    .from('monthly_savings')
+                    .delete()
+                    .in('id', selectedIds);
+                
+                if (result.error) {
+                    throw result.error;
+                }
+                
+                showStatus(`${selectedIds.length} entries deleted successfully`, 'success');
+                
+                // Reload data from Supabase
+                await loadDataFromSupabase();
+                closeBulkDeleteModal();
+                
+            } catch (error) {
+                console.error('Error deleting entries:', error);
+                showStatus(`Error deleting entries: ${error.message}`, 'error');
+                
+                // Delete locally as fallback
+                monthlyData = monthlyData.filter(entry => !selectedEntries.has(entry.id));
+                
+                updateDashboard();
+                generateCalendar();
+                updateHistory();
+                saveDataToLocalStorage();
+                closeBulkDeleteModal();
+            } finally {
+                confirmBulkDeleteButton.disabled = false;
+                confirmBulkDeleteButton.textContent = 'Yes, Delete All';
+            }
+        }
+        
+        // Initialize the app
+        function initApp() {
+            // Set current year in footer
+            document.getElementById('current-year').textContent = new Date().getFullYear();
+            
+            // Initialize date displays
+            updateDateTime();
+            initCurrentMonthYear();
+            
+            // Initialize Supabase
+            initSupabase();
+            
+            // Set up event listeners
+            saveButtonElement.addEventListener('click', saveForToday);
+            editTodayButton.addEventListener('click', () => {
+                const today = new Date();
+                const todayDateString = formatDateForStorage(today);
+                const todayEntry = monthlyData.find(entry => entry.savings_date === todayDateString);
+                if (todayEntry) {
+                    openEditModal(todayEntry);
+                }
+            });
+            configButton.addEventListener('click', saveSupabaseConfig);
+            selectAllButton.addEventListener('click', selectAllEntries);
+            deleteSelectedButton.addEventListener('click', openBulkDeleteModal);
+            
+            // Modal event listeners
+            saveEditButton.addEventListener('click', updateEntry);
+            deleteEntryButton.addEventListener('click', () => {
+                closeEditModal();
+                openDeleteModal(monthlyData.find(entry => entry.id === currentEditId));
+            });
+            cancelEditButton.addEventListener('click', closeEditModal);
+            confirmDeleteButton.addEventListener('click', deleteEntry);
+            cancelDeleteButton.addEventListener('click', closeDeleteModal);
+            confirmBulkDeleteButton.addEventListener('click', deleteSelectedEntries);
+            cancelBulkDeleteButton.addEventListener('click', closeBulkDeleteModal);
+            
+            // Close modals when clicking outside
+            [editModal, deleteModal, bulkDeleteModal].forEach(modal => {
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) {
+                        if (modal === editModal) closeEditModal();
+                        if (modal === deleteModal) closeDeleteModal();
+                        if (modal === bulkDeleteModal) closeBulkDeleteModal();
+                    }
+                });
+            });
+            
+            // Update time every second
+            setInterval(updateDateTime, 1000);
+        }
+        
+        // Initialize the app when DOM is loaded
+        document.addEventListener('DOMContentLoaded', initApp);
+    </script>
+</body>
+</html>
