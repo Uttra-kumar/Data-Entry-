@@ -846,7 +846,7 @@
                 <i class="fas fa-calendar-check"></i>
                 <div>
                     <h1>Monthly Savings Tracker</h1>
-                    <div class="logo-subtitle">Save ₹250 Daily, Achieve ₹7000 Monthly | Full CRUD Operations</div>
+                    <div class="logo-subtitle">Save ₹300 Daily, Achieve ₹7500 Monthly | Full CRUD Operations</div>
                 </div>
             </div>
             <div class="current-time">
@@ -873,7 +873,7 @@
                     
                     <div class="progress-container">
                         <div class="progress-label">
-                            <span>Monthly Target: ₹7000</span>
+                            <span>Monthly Target: ₹7500</span>
                             <span id="current-amount">₹0</span>
                         </div>
                         <div class="progress-bar">
@@ -887,20 +887,20 @@
                             <div class="stat-label">Total Saved</div>
                         </div>
                         <div class="stat-box">
-                            <div class="stat-value" id="remaining-amount">₹7000</div>
+                            <div class="stat-value" id="remaining-amount">₹7500</div>
                             <div class="stat-label">Remaining</div>
                         </div>
                         <div class="stat-box">
-                            <div class="stat-value" id="daily-target">₹250</div>
+                            <div class="stat-value" id="daily-target">₹300</div>
                             <div class="stat-label">Daily Amount</div>
                         </div>
                     </div>
                     
                     <div class="daily-amount-section">
-                        <div class="daily-amount-display" id="daily-amount-display">₹250</div>
+                        <div class="daily-amount-display" id="daily-amount-display">₹300</div>
                         <div class="action-buttons">
                             <button id="save-button" class="save-button">
-                                <i class="fas fa-save"></i> Save ₹250 for Today
+                                <i class="fas fa-save"></i> Save ₹300 for Today
                             </button>
                             <button id="edit-today-button" class="edit-button">
                                 <i class="fas fa-edit"></i> Edit
@@ -960,7 +960,7 @@
         </div>
         
         <footer>
-            <p>Monthly Savings Tracker with Full CRUD Operations &copy; <span id="current-year"></span> | Fixed Daily Amount: ₹250 | Monthly Target: ₹7000</p>
+            <p>Monthly Savings Tracker with Full CRUD Operations &copy; <span id="current-year"></span> | Fixed Daily Amount: ₹300 | Monthly Target: ₹7500</p>
             <p class="footer-note">Create, Read, Update, and Delete your savings records</p>
         </footer>
     </div>
@@ -976,7 +976,7 @@
                 </div>
                 <div class="modal-input-group">
                     <label for="edit-amount">Amount (₹)</label>
-                    <input type="number" id="edit-amount" class="modal-input" min="0" step="0.01" value="250">
+                    <input type="number" id="edit-amount" class="modal-input" min="0" step="0.01" value="300">
                 </div>
             </div>
             <div class="modal-buttons">
@@ -1019,8 +1019,8 @@
 
     <script>
         // Configuration
-        const DAILY_AMOUNT = 250;
-        const MONTHLY_TARGET = 7000;
+        const DAILY_AMOUNT = 300;
+        const MONTHLY_TARGET = 7500;
         
         // Supabase setup
         let client = null;
@@ -1288,12 +1288,12 @@
             const todayEntry = monthlyData.find(entry => entry.savings_date === todayDateString);
             
             if (todayEntry) {
-                saveButtonElement.innerHTML = '<i class="fas fa-check-circle"></i> ₹250 Saved Today';
+                saveButtonElement.innerHTML = '<i class="fas fa-check-circle"></i> ₹300 Saved Today';
                 saveButtonElement.classList.add('saved');
                 saveButtonElement.disabled = true;
                 editTodayButton.disabled = false;
             } else {
-                saveButtonElement.innerHTML = '<i class="fas fa-save"></i> Save ₹250 for Today';
+                saveButtonElement.innerHTML = '<i class="fas fa-save"></i> Save ₹300 for Today';
                 saveButtonElement.classList.remove('saved');
                 saveButtonElement.disabled = false;
                 editTodayButton.disabled = true;
@@ -1365,7 +1365,7 @@
                         saveForDate(dateString);
                     });
                 } else if (day === today) {
-                    dayElement.setAttribute('data-tooltip', 'Today - Click to save ₹250');
+                    dayElement.setAttribute('data-tooltip', 'Today - Click to save ₹300');
                     
                     // Add click event for today
                     dayElement.addEventListener('click', () => {
@@ -1388,7 +1388,7 @@
                 // Amount indicator
                 const dayAmount = document.createElement('div');
                 dayAmount.className = 'day-amount';
-                dayAmount.textContent = savedEntry ? '₹250' : '₹0';
+                dayAmount.textContent = savedEntry ? '₹300' : '₹0';
                 if (savedEntry) dayAmount.classList.add('saved');
                 dayElement.appendChild(dayAmount);
                 
@@ -1636,7 +1636,7 @@
                 const todayDateString = formatDateForStorage(today);
                 if (dateString !== todayDateString) {
                     saveButtonElement.disabled = false;
-                    saveButtonElement.innerHTML = '<i class="fas fa-save"></i> Save ₹250 for Today';
+                    saveButtonElement.innerHTML = '<i class="fas fa-save"></i> Save ₹300 for Today';
                 }
             }
         }
